@@ -20,7 +20,7 @@ Works on macOS, iOS and Linux. In theory.
 
 In Package.swift:
 
-```
+```swift
 // in your package:
 dependencies: [
     .package(url: "https://github.com/andreasley/SimpleSMTPClient.git", branch: "master")
@@ -38,13 +38,13 @@ In Xcode:
 
 ### Import the module
 
-```
+```swift
 import SimpleSMTPClient
 ```
 
 ### Configure the server
 
-```	
+```swift
 let server = SMTPServerConfiguration(
     hostname: "someSmtpServerHost.com",
     port: .defaultForTLS,
@@ -55,7 +55,7 @@ let server = SMTPServerConfiguration(
 
 ### Create the message
 
-```
+```swift
 let email = Email()
 email.subject = "Hello there!"
 email.from = "some.person@sendinghost.com"
@@ -65,14 +65,14 @@ email.htmlBody = "<html><body><h1>Email attachment test</h1></body></html>"
 
 ### Add an attachment
 
-```
+```swift
 let textAttachment = try Attachment(filename: "test.txt", data: "hello".data(using: .utf8)!, contentType: "text/plain")
 email.attachments.append(textAttachment)
 ```
 
 ### Send the email
 
-```
+```swift
 let mailer = Mailer(server: server)
 try mailer.send(email: email) { result in
     switch result {
