@@ -6,11 +6,11 @@ public struct Recipient
         case invalidEmailAddress
     }
     
-    static let emailPredicate = NSPredicate(format: "SELF MATCHES %@", "^.+@.+$")
+    static let emailPattern = try! Regex(#"^\S+@\S+\.\S+$"#)
     
     public init(name:String? = nil, address:String) throws
     {
-        guard Recipient.emailPredicate.evaluate(with: address) else {
+        guard let _ = address.wholeMatch(of: Self.emailPattern) else {
             throw Error.invalidEmailAddress
         }
         self.address = address
@@ -44,8 +44,8 @@ extension Recipient : LosslessStringConvertible
     public init?(_ address: String)
     {
         // TODO: Parse combined name/address
-        
-        guard Recipient.emailPredicate.evaluate(with: address) else {
+
+        guard let _ = address.wholeMatch(of: Self.emailPattern) else {
             return nil
         }
         self.address = address
