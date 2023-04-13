@@ -4,7 +4,7 @@ An _experimental_ SMTP client, written in Swift and based on SwiftNIO 2.
 
 # Supported platforms
 
-Works on macOS, iOS and Linux. In theory.
+Works on macOS, iOS and Linux.
 
 # State and compatibility
 
