@@ -11,6 +11,7 @@ final class SimpleSMTPClientTests: XCTestCase {
     {
         let hostname:String
         let sender:String
+        let replyTo:String?
         let recipient:String
         let username:String
         let password:String
@@ -50,6 +51,9 @@ final class SimpleSMTPClientTests: XCTestCase {
         let email = Email()
         email.subject = "Test"
         email.from = try Recipient(address: credentials.sender)
+        if let replyToAddress = credentials.replyTo {
+            email.replyTo = try Recipient(address: replyToAddress)
+        }
         email.to = [try Recipient(address: credentials.recipient)]
         let textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
         email.attachments.append(textAttachment)

@@ -25,6 +25,9 @@ extension Email : BufferWritable
         writeMessageHeader(to: &buffer, field: "From", value: sender.mailbox)
         writeMessageHeader(to: &buffer, field: "To", value: self.to.mailboxGroup)
         writeMessageHeader(to: &buffer, field: "Cc", value: self.cc.mailboxGroup)
+        if let replyToAddress = replyTo?.mailbox {
+            writeMessageHeader(to: &buffer, field: "Reply-To", value: replyToAddress)
+        }
         writeMessageHeader(to: &buffer, field: "Date", value: dateFormatter.string(from: Date()))
         writeMessageHeader(to: &buffer, field: "Subject", value: subject)
         writeMessageHeader(to: &buffer, field: "Message-ID", value: messageId)
