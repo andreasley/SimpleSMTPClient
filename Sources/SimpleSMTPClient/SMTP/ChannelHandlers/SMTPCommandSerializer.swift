@@ -10,6 +10,7 @@ final class SMTPCommandSerializer: MessageToByteEncoder, ChannelHandler
     init()
     {
         self.dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+        self.dateFormatter.locale = Locale(identifier: "en_US")
     }
     
     func encode(data: SMTPCommand, out: inout ByteBuffer) throws

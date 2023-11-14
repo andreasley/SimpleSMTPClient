@@ -55,7 +55,8 @@ final class SimpleSMTPClientTests: XCTestCase {
             email.replyTo = try Recipient(address: replyToAddress)
         }
         email.to = [try Recipient(address: credentials.recipient)]
-        let textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
+        var textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
+        textAttachment.creationDate = .now
         email.attachments.append(textAttachment)
         email.htmlBody = "<html><body><h1>Email attachment test</h1></body></html>"
         
