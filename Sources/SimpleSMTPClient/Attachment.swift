@@ -90,11 +90,13 @@ public struct Attachment
     
     public init(file url:URL, hideDates:Bool = false) throws
     {
+        let filePath = url.path
+        
         guard url.isFileURL else {
             throw AttachmentError.urlNotAFile
         }
         
-        guard FileManager.default.fileExists(atPath: url.absoluteString) else {
+        guard FileManager.default.fileExists(atPath: filePath) else {
             throw AttachmentError.fileNotFound
         }
 
@@ -103,7 +105,7 @@ public struct Attachment
 
         self.data = try Data(contentsOf: url)
 
-        let attributes = try FileManager.default.attributesOfItem(atPath: url.absoluteString)
+        let attributes = try FileManager.default.attributesOfItem(atPath: filePath)
         self.size = attributes[.size] as? Int ?? 0
         
         if !hideDates {
