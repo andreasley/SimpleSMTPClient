@@ -21,9 +21,7 @@ extension Email : BufferWritable
             throw ErrorSerializationError.subjectMissing
         }
         
-        if containsNonASCII(subject) {
-            subject = try base64EncodeSubject(subject)
-        }
+        subject = try subject.base64EncodedIfRequired()
 
         let messageId = UUID().uuidString + sender.address.drop { $0 != "@" }
         
@@ -54,28 +52,7 @@ extension Email : BufferWritable
         buffer.writeString(CRLF)
         buffer.writeString(".")
     }
-    
-    func containsNonASCII(_ string:String) -> Bool
-    {
-        for utf8Character in string.utf8 {
-            switch utf8Character {
-            case 9, 32...60, 62...126:
-                continue
-            default:
-                return true
-            }
-        }
-        return false
-    }
-    
-    func base64EncodeSubject(_ subject:String) throws -> String
-    {
-        guard let encodedSubject = subject.data(using: .utf8)?.base64EncodedString(options: .lineLength64Characters) else {
-            throw ErrorSerializationError.failedToEncodeSubject
-        }
-        return "=?utf-8?B?\(encodedSubject)?="
-    }
-    
+        
     public func createContentParts() throws -> BufferWritable
     {
         let rootContentPart:AnyPart

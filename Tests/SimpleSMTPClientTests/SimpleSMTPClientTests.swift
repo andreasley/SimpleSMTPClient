@@ -50,11 +50,11 @@ final class SimpleSMTPClientTests: XCTestCase {
         
         let email = Email()
         email.subject = "Test / Contrôle / テスト"
-        email.from = try Recipient(address: credentials.sender)
+        email.from = try Recipient(name: "Tester / Prüfer / 測試員", address: credentials.sender)
         if let replyToAddress = credentials.replyTo {
             email.replyTo = try Recipient(address: replyToAddress)
         }
-        email.to = [try Recipient(address: credentials.recipient)]
+        email.to = [try Recipient(name: "Recipient / Viðtakanda / ผู้รับ", address: credentials.recipient)]
         var textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
         textAttachment.creationDate = .now
         email.attachments.append(textAttachment)

@@ -15,14 +15,16 @@ public struct Recipient
         }
         self.address = address
         self.name = name
+        self.encodedName = try name?.base64EncodedIfRequired()
     }
 
     public var name: String?
+    public var encodedName: String?
     public var address: String
     
     public var mailbox:String {
-        if let name = name {
-            return "\(name) <\(address)>";
+        if let encodedName = encodedName {
+            return "\(encodedName) <\(address)>";
         } else {
             return "<\(address)>";
         }
