@@ -49,7 +49,7 @@ final class SimpleSMTPClientTests: XCTestCase {
         let timeout:TimeInterval = 60
         
         let email = Email()
-        email.subject = "Test"
+        email.subject = "Test / Contrôle / テスト"
         email.from = try Recipient(address: credentials.sender)
         if let replyToAddress = credentials.replyTo {
             email.replyTo = try Recipient(address: replyToAddress)
