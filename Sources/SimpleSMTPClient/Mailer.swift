@@ -1,6 +1,5 @@
 import Foundation
 import NIO
-import NIOExtras
 import NIOSSL
 import Logging
 
