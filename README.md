@@ -86,7 +86,7 @@ try mailer.send(email: email) { result in
 
 # Contributing
 
-Feel free to fork (see [license](License.md)) or contribute.
+Feel free to fork (see [license](LICENSE.txt)) or contribute.
 
 # Attribution
 
