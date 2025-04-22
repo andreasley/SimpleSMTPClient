@@ -75,9 +75,18 @@ public struct Attachment
         "7z": "application/x-7z-compressed"
     ]
     
-    enum AttachmentError : Swift.Error {
+    enum AttachmentError: Swift.Error, LocalizedError {
         case urlNotAFile
         case fileNotFound
+
+        public var errorDescription: String? {
+            switch self {
+                case .urlNotAFile:
+                return "URL does not point to a file"
+            case .fileNotFound:
+                return "File not found"
+            }
+        }
     }
 
     public var filename: String

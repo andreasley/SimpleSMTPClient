@@ -1,4 +1,5 @@
 import NIO
+import Foundation
 
 final class SMTPReplyParser: ChannelInboundHandler
 {
@@ -7,9 +8,16 @@ final class SMTPReplyParser: ChannelInboundHandler
     
     var multilineCache = [String]()
     
-    public enum Error: Swift.Error
+    public enum Error: Swift.Error, LocalizedError
     {
         case failedToDetectStatusCode
+
+        public var errorDescription: String? {
+            switch self {
+            case .failedToDetectStatusCode:
+                "Failed to detect SMTP status code"
+            }
+        }
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny)

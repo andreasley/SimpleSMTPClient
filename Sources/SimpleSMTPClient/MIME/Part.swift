@@ -2,8 +2,15 @@ import Foundation
 
 public struct Part
 {
-    public enum Error : Swift.Error {
+    public enum Error : Swift.Error, LocalizedError {
         case notImplemented
+
+        public var errorDescription: String? {
+            switch self {
+            case .notImplemented:
+                "Not implemented"
+            }
+        }
     }
     
     public struct ContentType

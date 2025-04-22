@@ -3,12 +3,27 @@ import NIO
 
 extension Email : BufferWritable
 {
-    public enum ErrorSerializationError : Swift.Error {
+    public enum ErrorSerializationError: Swift.Error, LocalizedError {
         case senderMissing
         case subjectMissing
         case contentMissing
         case failedToCreatePartForAttachment
         case failedToEncodeSubject
+
+        public var errorDescription: String? {
+            switch self {
+            case .senderMissing:
+                "Sender address is missing"
+            case .subjectMissing:
+                "Subject is missing"
+            case .contentMissing:
+                "Content is missing"
+            case .failedToCreatePartForAttachment:
+                "Failed to create MIME part for attachment"
+            case .failedToEncodeSubject:
+                "Failed to encode subject line"
+            }
+        }
     }
     
     public func write(to buffer: inout ByteBuffer, dateFormatter:DateFormatter) throws

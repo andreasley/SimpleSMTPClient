@@ -2,8 +2,15 @@ import Foundation
 
 public struct Recipient
 {
-    enum Error : Swift.Error {
+    public enum Error : Swift.Error, LocalizedError {
         case invalidEmailAddress
+        
+        public var errorDescription: String? {
+            switch self {
+            case .invalidEmailAddress:
+                "Invalid email address"
+            }
+        }
     }
     
     static let emailPattern = try! Regex(#"^\S+@\S+\.\S+$"#)

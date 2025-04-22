@@ -2,8 +2,15 @@ import Foundation
 
 extension String
 {
-    public enum MIMEStringEncodingError : Swift.Error {
+    public enum MIMEStringEncodingError: Swift.Error, LocalizedError {
         case failedToEncodeToBase64
+
+        public var errorDescription: String? {
+            switch self {
+            case .failedToEncodeToBase64:
+                "Failed to encode to Base64"
+            }
+        }
     }
 
     var containsNonASCII:Bool

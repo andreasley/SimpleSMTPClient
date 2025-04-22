@@ -22,9 +22,18 @@ public class Email
     
     public init() {}
     
-    public enum Error : Swift.Error {
+    public enum Error: Swift.Error, LocalizedError {
         case invalidSender
         case invalidRecipient
+
+        public var errorDescription: String? {
+            switch self {
+            case .invalidSender:
+                return "Sender address is invalid"
+            case .invalidRecipient:
+                return "Recipient address is invalid"
+            }
+        }
     }
     
     var hasBody:Bool {
