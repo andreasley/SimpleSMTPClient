@@ -9,9 +9,18 @@ public class Mailer
     public let eventLoopGroup:EventLoopGroup
     public let clientIdentification:String?
     
-    public enum Error:Swift.Error {
+    public enum Error: Swift.Error, LocalizedError {
         case emailInvalidOrIncomplete
         case sslInitializationFailed
+        
+        public var errorDescription: String? {
+            switch self {
+            case .emailInvalidOrIncomplete:
+                "The email is invalid or incomplete. Check the following fields: from, to, subject, body"
+            case .sslInitializationFailed:
+                "SSL initialization failed."
+            }
+        }
     }
     
     public init(server:SMTPServerConfiguration, eventLoopGroup:EventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount), clientIdentification:String? = nil)
