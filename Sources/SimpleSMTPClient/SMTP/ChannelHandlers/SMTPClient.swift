@@ -82,6 +82,7 @@ final class SMTPClient: ChannelInboundHandler
     func abortSending(in context: ChannelHandlerContext, with error: Swift.Error)
     {
         self.error = error
+        // TODO: Surface error
         quit(in: context)
     }
 
