@@ -23,6 +23,10 @@ final class ConnectionLogger: ChannelDuplexHandler
         context.fireChannelRead(data)
     }
     
+    func errorCaught(context: ChannelHandlerContext, error: any Error) {
+        logger.error("SMTPClient caught error: \(error)")
+    }
+    
     func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?)
     {
         let buffer = self.unwrapOutboundIn(data)
