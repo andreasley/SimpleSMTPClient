@@ -22,7 +22,11 @@ public struct Recipient
         }
         self.address = address
         self.name = name
-        self.encodedName = try name?.base64EncodedIfRequired()
+        
+        if let name {
+            // Note: Don't quote names because they are especially tricky to fold properly and don't combine with encoded words
+            self.encodedName = try name.base64EncodedIfRequired()
+        }
     }
 
     public var name: String?
