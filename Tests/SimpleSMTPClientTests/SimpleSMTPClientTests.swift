@@ -54,7 +54,7 @@ final class SimpleSMTPClientTests: XCTestCase {
         if let replyToAddress = credentials.replyTo {
             email.replyTo = try Recipient(address: replyToAddress)
         }
-        email.to = [try Recipient(name: "Recipient / Viðtakanda / ผู้รับ", address: credentials.recipient)]
+        email.to = [try Recipient(name: "Recipient / Viðtakanda / ผู้รับ (a very long name, to test wrapping and the comma)", address: credentials.recipient)]
         var textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
         textAttachment.creationDate = .now
         email.attachments.append(textAttachment)
