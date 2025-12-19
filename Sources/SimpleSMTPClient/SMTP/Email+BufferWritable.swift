@@ -130,10 +130,44 @@ extension Email : BufferWritable
         return attachmentPart
     }
     
-    public func writeMessageHeader(to buffer: inout ByteBuffer, field:String, value:String)
+    public func writeMessageHeader(to buffer: inout ByteBuffer, field: String, value: String, suggestedLineLength: Int = 78, partSeparatorForFolding: String = " ")
     {
-        buffer.writeString("\(field): \(value)")
+        let prefix = "\(field): "
+        let prefixLength = prefix.count
+        
+        buffer.writeString(prefix)
+
+        if prefixLength + value.count <= suggestedLineLength {
+            buffer.writeString(value)
+        } else {
+            var currentLineLength = prefixLength
+            let parts = value.components(separatedBy: partSeparatorForFolding)
+            
+            for (index, part) in parts.enumerated() {
+                
+                guard part.count < (998 - 50) else {
+                    // This part is too long to include in the header.
+                    continue
+                }
+                
+                let lineLengthWithNextPart = currentLineLength + part.count + partSeparatorForFolding.count
+                let needsNewLine = (lineLengthWithNextPart > suggestedLineLength) && (currentLineLength > 1)
+                
+                if needsNewLine {
+                    buffer.writeString(CRLF)
+                    buffer.writeString(" ") // Start a new line with a leading space (folding)
+                    currentLineLength = 1
+                }
+
+                buffer.writeString(part)
+                
+                if index < parts.count - 1 {
+                    buffer.writeString(partSeparatorForFolding)
+                    currentLineLength += part.count + partSeparatorForFolding.count
+                }
+            }
+        }
+
         buffer.writeString(CRLF)
     }
-    
 }
