@@ -32,17 +32,14 @@ extension String
         // To properly fold lines, the encoded field needs to be split up into multiple chunks.
         
         guard self.containsNonASCII else { return self }
-        let fieldValueSafeLength = 65
+        let fieldValueSafeLength = 55
         let encodedCharacterLengthLimit = fieldValueSafeLength / 4 * 3
-        
-        let chunks = stride(from: 0, to: count, by: encodedCharacterLengthLimit).map { offset in
-            let start = index(startIndex, offsetBy: offset)
-            let end = index(start, offsetBy: encodedCharacterLengthLimit, limitedBy: endIndex) ?? endIndex
-            return String(self[start..<end])
-        }
 
         var encodedChunks = [String]()
         
+        // The field might contain characters that require multiple bytes, so to observe the length limit, chunking by byte size is necessary (instead of by character count)
+        let chunks = chunkedByBytes(maxBytes: encodedCharacterLengthLimit)
+
         for chunk in chunks {
             guard let data = chunk.data(using: .utf8) else {
                 throw MIMEStringEncodingError.failedToEncodeToBase64
@@ -53,5 +50,36 @@ extension String
         }
         
         return encodedChunks.joined(separator: " ")
+    }
+    
+    private func chunkedByBytes(maxBytes: Int) -> [String]
+    {
+        var chunks: [String] = []
+        var currentChunk = ""
+        var currentByteCount = 0
+        
+        for character in self {
+            let characterString = String(character)
+            let characterByteCount = characterString.utf8.count
+            
+            // If adding this character would exceed the limit, start a new chunk
+            if currentByteCount + characterByteCount > maxBytes {
+                if !currentChunk.isEmpty {
+                    chunks.append(currentChunk)
+                }
+                currentChunk = characterString
+                currentByteCount = characterByteCount
+            } else {
+                currentChunk.append(character)
+                currentByteCount += characterByteCount
+            }
+        }
+        
+        // Add the last chunk if it's not empty
+        if !currentChunk.isEmpty {
+            chunks.append(currentChunk)
+        }
+        
+        return chunks
     }
 }
