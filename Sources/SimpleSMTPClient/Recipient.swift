@@ -24,8 +24,9 @@ public struct Recipient
         self.name = name
         
         if let name {
+            let shouldForceEncoding = name.contains(",")
             // Note: Don't quote names because they are especially tricky to fold properly and don't combine with encoded words
-            self.encodedName = try name.base64EncodedIfRequired()
+            self.encodedName = try name.base64EncodedIfRequired(force: shouldForceEncoding)
         }
     }
 

@@ -26,12 +26,13 @@ extension String
         return false
     }
     
-    func base64EncodedIfRequired() throws -> String
+    func base64EncodedIfRequired(force: Bool = false) throws -> String
     {
         // As per RFC 2047, "each line of a header field that contains one or more 'encoded-word's is limited to 76 characters".
         // To properly fold lines, the encoded field needs to be split up into multiple chunks.
         
-        guard self.containsNonASCII else { return self }
+        guard force || self.containsNonASCII else { return self }
+        
         let fieldValueSafeLength = 55
         let encodedCharacterLengthLimit = fieldValueSafeLength / 4 * 3
 
