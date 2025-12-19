@@ -28,11 +28,30 @@ extension String
     
     func base64EncodedIfRequired() throws -> String
     {
-        guard self.containsNonASCII else { return self }
+        // As per RFC 2047, "each line of a header field that contains one or more 'encoded-word's is limited to 76 characters".
+        // To properly fold lines, the encoded field needs to be split up into multiple chunks.
         
-        guard let encoded = self.data(using: .utf8)?.base64EncodedString(options: .lineLength64Characters) else {
-            throw MIMEStringEncodingError.failedToEncodeToBase64
+        guard self.containsNonASCII else { return self }
+        let fieldValueSafeLength = 65
+        let encodedCharacterLengthLimit = fieldValueSafeLength / 4 * 3
+        
+        let chunks = stride(from: 0, to: count, by: encodedCharacterLengthLimit).map { offset in
+            let start = index(startIndex, offsetBy: offset)
+            let end = index(start, offsetBy: encodedCharacterLengthLimit, limitedBy: endIndex) ?? endIndex
+            return String(self[start..<end])
         }
-        return "=?utf-8?B?\(encoded)?="
+
+        var encodedChunks = [String]()
+        
+        for chunk in chunks {
+            guard let data = chunk.data(using: .utf8) else {
+                throw MIMEStringEncodingError.failedToEncodeToBase64
+            }
+            let encodedChunk = "=?UTF-8?B?\(data.base64EncodedString())?="
+            
+            encodedChunks.append(encodedChunk)
+        }
+        
+        return encodedChunks.joined(separator: " ")
     }
 }
