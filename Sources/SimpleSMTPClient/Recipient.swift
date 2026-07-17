@@ -24,8 +24,10 @@ public struct Recipient
         self.name = name
         
         if let name {
-            let shouldForceEncoding = name.contains(",")
+            // A display name containing RFC 5322 "specials" would require a quoted-string, so force encoding instead.
             // Note: Don't quote names because they are especially tricky to fold properly and don't combine with encoded words
+            let specials = "()<>[]:;@\\,.\""
+            let shouldForceEncoding = name.contains(where: { specials.contains($0) })
             self.encodedName = try name.base64EncodedIfRequired(force: shouldForceEncoding)
         }
     }

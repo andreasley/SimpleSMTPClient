@@ -5,13 +5,14 @@ extension Multipart : BufferWritable
 {    
     public func write(to buffer: inout ByteBuffer, dateFormatter: DateFormatter) throws
     {
-        buffer.writeLine("Content-Type: \(subtype.mediaType); boundary=\(MIMETokens.quotes + boundary + MIMETokens.quotes)")
+        buffer.writeLine("Content-Type: \(subtype.mediaType)" + MIMETokens.foldedParameterSeparator + "boundary=\(MIMETokens.quotes + boundary + MIMETokens.quotes)")
         
-        buffer.writeLine(CRLF)
+        // A single empty line separates the header from the body (RFC 5322, section 2.1)
+        buffer.writeString(CRLF)
 
+        // Each part ends with CRLF, so every boundary delimiter starts at the beginning of a line (RFC 2046, section 5.1.1)
         for part in parts
         {
-            buffer.writeLine(CRLF)
             buffer.writeLine(MIMETokens.boundaryPrefix + boundary)
             try part.write(to: &buffer, dateFormatter: dateFormatter)
         }

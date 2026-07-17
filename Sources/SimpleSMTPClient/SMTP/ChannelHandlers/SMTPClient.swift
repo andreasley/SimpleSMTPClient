@@ -43,6 +43,7 @@ final class SMTPClient: ChannelInboundHandler
     private var unprocessedRecipients = Set<Recipient>()
     private let sslHandler:NIOSSLClientHandler
     private var hasCompletedSSLHandshake = false
+    private var hasAttemptedIdentityFallback = false
     private var isSendingSuccessful = false
 
     init(server:SMTPServerConfiguration, email:Email, completionPromise:EventLoopPromise<Void>, sslHandler:NIOSSLClientHandler)
@@ -121,7 +122,13 @@ final class SMTPClient: ChannelInboundHandler
                     } else {
                         beginAuthentication(in: context)
                     }
-                case 500:
+                case 500, 502:
+                    // Servers that don't support EHLO reply with 500 (command unrecognized) or 502 (command not implemented)
+                    guard !hasAttemptedIdentityFallback else {
+                        abortSending(in: context, with: SMTPError.unexpectedReply(reply: reply))
+                        return
+                    }
+                    hasAttemptedIdentityFallback = true
                     submit(.indicateIdentityFallback(clientHostname: self.serverConfiguration.hostname), in: context)
                     self.state = .awaitingIdentityConfirmation
                 default:
@@ -165,7 +172,8 @@ final class SMTPClient: ChannelInboundHandler
                             return
                         }
                         let digest = Insecure.MD5.hash(data: data).map { String(format: "%02hhx", $0) }.joined()
-                        submit(.sendBase64EncodedData(username + digest), in: context)
+                        // As per RFC 2195, the response is the username, a space, and the digest
+                        submit(.sendBase64EncodedData(username + " " + digest), in: context)
                         state = .awaitingUsernameConfirmation
                     case .none:
                         abortSending(in: context, with: SMTPError.invalidState)

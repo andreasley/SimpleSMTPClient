@@ -13,20 +13,22 @@ extension Part : BufferWritable
             buffer.writeLine("X-Attachment-Id: \(attachmentId)")
         }
         
-        buffer.writeLine(CRLF)
+        // A single empty line separates the header from the body (RFC 5322, section 2.1)
+        buffer.writeString(CRLF)
         
         if let data = data {
             switch self.contentTransferEncoding {
             case .base64:
                 buffer.writeBase64Encoded(data)
+                buffer.writeString(CRLF)
+            case .quotedPrintable:
+                buffer.writeBytes(data.quotedPrintableEncoded)
+                buffer.writeString(CRLF)
             default:
-                // TODO: Implement at least quoted-printable
                 throw Error.notImplemented
             }
 
         }
-
-        buffer.writeLine(CRLF)
     }
 }
 
@@ -40,11 +42,10 @@ extension Part.ContentType : BufferWritable
             parameters["charset"] = charset
         }
         if parameters.count > 0 {
-            contentTypeString += MIMETokens.parameterSeparator
-            contentTypeString += parameters.map { "\($0.key)=\($0.value)" }.joined(separator: MIMETokens.parameterSeparator)
+            // Fold each parameter onto its own line to observe the recommended line length limit (RFC 5322, section 2.1.1)
+            contentTypeString += MIMETokens.foldedParameterSeparator
+            contentTypeString += parameters.map { "\($0.key)=\($0.value)" }.joined(separator: MIMETokens.foldedParameterSeparator)
         }
-        
-        // TODO: Break lines where appropriate
         
         buffer.writeLine(contentTypeString)
     }
@@ -73,29 +74,37 @@ extension Part.ContentDisposition : BufferWritable
         var parameters:[String:String] = [:]
         
         if let filename = filename {
-            // TODO: Normalize filename?
-            parameters["filename"] = MIMETokens.quotes + filename + MIMETokens.quotes
+            if filename.containsNonASCII {
+                // Parameter values must be US-ASCII; encode non-ASCII filenames as an extended parameter (RFC 2231)
+                parameters["filename*"] = "UTF-8''" + filename.percentEncodedForMIMEParameter
+            } else {
+                // Escape backslashes and quotes to form a valid quoted-string (RFC 5322, section 3.2.4)
+                let escapedFilename = filename
+                    .replacingOccurrences(of: "\\", with: "\\\\")
+                    .replacingOccurrences(of: MIMETokens.quotes, with: "\\" + MIMETokens.quotes)
+                parameters["filename"] = MIMETokens.quotes + escapedFilename + MIMETokens.quotes
+            }
         }
 
         if let size = size {
             parameters["size"] = String(size)
         }
 
+        // Date values contain spaces, commas and colons (tspecials, RFC 2045), so they must be quoted (RFC 2183, section 2)
         if let creationDate = creationDate {
-            parameters["creation-date"] = dateFormatter.string(from: creationDate)
+            parameters["creation-date"] = MIMETokens.quotes + dateFormatter.string(from: creationDate) + MIMETokens.quotes
         }
 
         if let modificationDate = modificationDate {
-            parameters["modification-date"] = dateFormatter.string(from: modificationDate)
+            parameters["modification-date"] = MIMETokens.quotes + dateFormatter.string(from: modificationDate) + MIMETokens.quotes
         }
 
         if parameters.count > 0 {
-            disposition += MIMETokens.parameterSeparator
-            disposition += parameters.map { "\($0.key)=\($0.value)" }.joined(separator: MIMETokens.parameterSeparator)
+            // Fold each parameter onto its own line to observe the recommended line length limit (RFC 5322, section 2.1.1)
+            disposition += MIMETokens.foldedParameterSeparator
+            disposition += parameters.map { "\($0.key)=\($0.value)" }.joined(separator: MIMETokens.foldedParameterSeparator)
         }
 
-        // TODO: Break lines where appropriate
-        
         buffer.writeLine(disposition)
     }
 }

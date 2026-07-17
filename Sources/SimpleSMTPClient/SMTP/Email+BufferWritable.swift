@@ -38,7 +38,8 @@ extension Email : BufferWritable
         
         subject = try subject.base64EncodedIfRequired()
 
-        let messageId = UUID().uuidString + sender.address.drop { $0 != "@" }
+        // As per RFC 5322, section 3.6.4, a msg-id is enclosed in angle brackets
+        let messageId = "<\(UUID().uuidString)\(sender.address.drop { $0 != "@" })>"
         
         writeMessageHeader(to: &buffer, field: "From", value: sender.mailbox)
         writeMessageHeader(to: &buffer, field: "To", value: self.to.mailboxGroup)
@@ -63,9 +64,6 @@ extension Email : BufferWritable
 
         let content = try self.createContentParts()
         try content.write(to: &buffer, dateFormatter: dateFormatter)
-
-        buffer.writeString(CRLF)
-        buffer.writeString(".")
     }
         
     public func createContentParts() throws -> BufferWritable
@@ -95,7 +93,8 @@ extension Email : BufferWritable
 
         if self.attachments.count > 0
         {
-            var rootContentMultipart = Multipart(.related)
+            // multipart/mixed is the correct subtype for attachments; multipart/related would require a "type" parameter (RFC 2387) and is meant for inline resources referenced from the body
+            var rootContentMultipart = Multipart(.mixed)
             rootContentMultipart.parts.append(bodyPart)
             for attachment in self.attachments {
                 rootContentMultipart.parts.append(try createPart(for: attachment))
@@ -122,9 +121,13 @@ extension Email : BufferWritable
                                                   creationDate: attachment.creationDate,
                                                   modificationDate: attachment.modificationDate)
         
+        // Text attachments count as text parts for spam filters, which penalize base64-encoded
+        // text without 8-bit characters, so encode them as quoted-printable instead
+        let contentTransferEncoding: Part.ContentTransferEncoding = mediaType.lowercased().hasPrefix("text/") ? .quotedPrintable : .base64
+        
         let attachmentPart = Part(contentType: Part.ContentType(mediaType: mediaType),
                                   contentDisposition: disposition,
-                                  contentTransferEncoding: .base64,
+                                  contentTransferEncoding: contentTransferEncoding,
                                   data: attachment.data)
         
         return attachmentPart

@@ -26,6 +26,14 @@ extension String
         return false
     }
     
+    /// Percent-encodes the string for use as an extended MIME parameter value (RFC 2231, section 4).
+    var percentEncodedForMIMEParameter:String
+    {
+        var allowedCharacters = CharacterSet.alphanumerics
+        allowedCharacters.insert(charactersIn: "!#$&+-.^_`|~")
+        return self.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
+    }
+
     func base64EncodedIfRequired(force: Bool = false) throws -> String
     {
         // As per RFC 2047, "each line of a header field that contains one or more 'encoded-word's is limited to 76 characters".

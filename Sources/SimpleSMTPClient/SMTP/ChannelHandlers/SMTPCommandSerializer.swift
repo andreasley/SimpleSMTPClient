@@ -10,7 +10,8 @@ final class SMTPCommandSerializer: MessageToByteEncoder, ChannelHandler
     init()
     {
         self.dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
-        self.dateFormatter.locale = Locale(identifier: "en_US")
+        // en_US_POSIX prevents the user's 12/24-hour time setting from overriding the fixed format (see Apple QA1480); RFC 5322 requires English day and month names.
+        self.dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     }
     
     func encode(data: SMTPCommand, out: inout ByteBuffer) throws
@@ -40,7 +41,14 @@ final class SMTPCommandSerializer: MessageToByteEncoder, ChannelHandler
             case .beginDataTransaction:
                 out.writeString("DATA")
             case .transferData(let message):
-                try message.write(to: &out, dateFormatter: dateFormatter)
+                var messageBuffer = ByteBufferAllocator().buffer(capacity: 4096)
+                try message.write(to: &messageBuffer, dateFormatter: dateFormatter)
+                // Escape lines starting with a dot (transparency, RFC 5321, section 4.5.2) and terminate the data transfer with <CRLF>.<CRLF>
+                out.writeDotStuffed(messageBuffer)
+                if !out.endsWithCRLF {
+                    out.writeString(CRLF)
+                }
+                out.writeString(".")
             case .quit:
                 out.writeString("QUIT")
         }
