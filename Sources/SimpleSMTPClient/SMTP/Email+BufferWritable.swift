@@ -36,7 +36,7 @@ extension Email : BufferWritable
             throw ErrorSerializationError.subjectMissing
         }
         
-        subject = try subject.base64EncodedIfRequired()
+        subject = try subject.encodedWordIfRequired()
 
         // As per RFC 5322, section 3.6.4, a msg-id is enclosed in angle brackets
         let messageId = "<\(UUID().uuidString)\(sender.address.drop { $0 != "@" })>"

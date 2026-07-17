@@ -49,15 +49,16 @@ final class SimpleSMTPClientTests: XCTestCase {
         let timeout:TimeInterval = 60
         
         let email = Email()
-        email.subject = "Test / Contrôle / テスト"
-        email.from = try Recipient(name: "Tester / Prüfer / 測試員", address: credentials.sender)
+        email.subject = "Test"
+        email.from = try Recipient(name: "Tester", address: credentials.sender)
         if let replyToAddress = credentials.replyTo {
             email.replyTo = try Recipient(address: replyToAddress)
         }
-        email.to = [try Recipient(name: "Recipient / Viðtakanda / ผู้รับ (a very long name, to test wrapping and the comma)", address: credentials.recipient)]
+        email.to = [try Recipient(name: "Recipient", address: credentials.recipient)]
         var textAttachment = try Attachment(filename: "test.txt", data: "gnampf".data(using: .utf8)!, contentType: "text/plain")
         textAttachment.creationDate = .now
         email.attachments.append(textAttachment)
+        email.plainBody = "Email attachment test"
         email.htmlBody = "<html><body><h1>Email attachment test</h1></body></html>"
         
         
@@ -88,7 +89,58 @@ final class SimpleSMTPClientTests: XCTestCase {
             return
         }
    }
-    
+
+    func testSendEmailWithSpecialChars() throws
+    {
+        let sourceFileUrl = URL(fileURLWithPath: #file)
+        let credentialsFileUrl = sourceFileUrl.deletingLastPathComponent().appendingPathComponent("TestCredentials.json")
+        let credentialsData = try Data(contentsOf: credentialsFileUrl)
+        let credentials = try JSONDecoder().decode(TestCredentials.self, from: credentialsData)
+
+        let timeout:TimeInterval = 60
+        
+        let email = Email()
+        email.subject = "Test / Contrôle / テスト"
+        email.from = try Recipient(name: "Tester / Prüfer / 測試員", address: credentials.sender)
+        if let replyToAddress = credentials.replyTo {
+            email.replyTo = try Recipient(address: replyToAddress)
+        }
+        email.to = [try Recipient(name: "Recipient / Viðtakanda / ผู้รับ (a very long name, to test wrapping and the comma)", address: credentials.recipient)]
+        var textAttachment = try Attachment(filename: "test.txt", data: "Test / Contrôle / テスト".data(using: .utf8)!, contentType: "text/plain")
+        textAttachment.creationDate = .now
+        email.attachments.append(textAttachment)
+        email.plainBody = "Email attachment test äüö"
+        email.htmlBody = "<html><body><h1>Email attachment test &auml;&ouml;&uuml;</h1></body></html>"
+        
+        
+        let server = SMTPServerConfiguration(
+            hostname: credentials.hostname,
+            port: .defaultForTLS,
+            security: .TLS,
+            authentication: .login(username: credentials.username, password: credentials.password)
+        )
+        
+        let emailSent = expectation(description: "Email has been sent within \(timeout) seconds")
+        
+        let mailer = LoggingMailer(server: server)
+        try mailer.send(email: email) { result in
+            switch result {
+            case .success(_):
+                print("✅")
+            case .failure(let error):
+                print("❌ : \(error)")
+            }
+            emailSent.fulfill()
+        }
+        
+        
+        
+        guard XCTWaiter.wait(for: [emailSent], timeout: timeout) != .timedOut else {
+            XCTFail("Test aborted after \(timeout) seconds")
+            return
+        }
+   }
+
     static var allTests = [
         ("testSendEmail", testSendEmail),
     ]

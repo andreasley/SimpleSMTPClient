@@ -24,11 +24,16 @@ public struct Recipient
         self.name = name
         
         if let name {
-            // A display name containing RFC 5322 "specials" would require a quoted-string, so force encoding instead.
-            // Note: Don't quote names because they are especially tricky to fold properly and don't combine with encoded words
-            let specials = "()<>[]:;@\\,.\""
-            let shouldForceEncoding = name.contains(where: { specials.contains($0) })
-            self.encodedName = try name.base64EncodedIfRequired(force: shouldForceEncoding)
+            if name.requiresEncodedWord {
+                // Non-ASCII names need an RFC 2047 encoded word
+                self.encodedName = try name.encodedWordIfRequired()
+            } else if name.isPhraseSafeWithoutQuoting {
+                self.encodedName = name
+            } else {
+                // ASCII names containing specials become a quoted-string (RFC 5322, section 3.2.4);
+                // spam filters penalize headers that are encoded without needing to be
+                self.encodedName = name.quotedForHeaderField
+            }
         }
     }
 
